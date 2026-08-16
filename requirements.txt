@@ -1,0 +1,8 @@
+torch
+transformers
+pillow
+numpy
+matplotlib
+pyyaml
+pytest
+python -m experiments.week3.tokenizer_demo --config configs/tokenizer.yaml

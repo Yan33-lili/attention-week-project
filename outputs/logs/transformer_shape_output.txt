@@ -1,0 +1,11 @@
+config_path: configs\transformer.yaml
+input: shape=(2, 5, 32)
+attention_output: shape=(2, 5, 32)
+attention_weights: shape=(2, 4, 5, 5)
+feed_forward_output: shape=(2, 5, 32)
+encoder_output: shape=(2, 5, 32)
+
+Shape summary:
+[batch, tokens, dim] -> self-attention -> [batch, tokens, dim]
+attention_weights shape = [batch, heads, tokens, tokens]
+positional encoding is usually added before attention

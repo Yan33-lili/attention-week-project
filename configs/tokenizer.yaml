@@ -1,0 +1,6 @@
+model_name: distilbert-base-uncased
+texts:
+  - I love myself
+  - Transformers use attention to connect tokens
+output:
+  log_path: outputs/logs/tokenizer_output.txt

@@ -1,0 +1,7 @@
+model_name: openai/clip-vit-base-patch32
+texts:
+  - a red square
+  - a blue square
+image_inputs: []
+output:
+  report_path: outputs/metrics/clip_similarity_matrix.md

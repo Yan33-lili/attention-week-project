@@ -1,0 +1,8 @@
+seed: 42
+batch_size: 2
+seq_len: 5
+dim: 32
+num_heads: 4
+ff_dim: 64
+output:
+  log_path: outputs/logs/transformer_shape_output.txt
