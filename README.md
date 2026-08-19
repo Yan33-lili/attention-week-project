@@ -1645,3 +1645,53 @@ Shifted Window Attention
 
 
 MLP
+
+
+# Scaled vs Unscaled Attention Experiment
+
+
+## 1. Motivation
+
+Why divide by sqrt(d_k)
+
+
+## 2. Mathematical Derivation
+
+
+Var(QK^T)=d_k
+
+
+Scaling keeps variance stable
+
+
+## 3. Experimental Setup
+
+Q,K:
+random Gaussian
+
+N=64
+d_k=64
+
+
+## 4. Results
+
+
+### Score distribution
+
+(插图)
+
+
+### Attention distribution
+
+(插图)
+
+
+### Entropy comparison
+
+(插图)
+
+
+## 5. Conclusion
+
+Scaled Attention prevents softmax saturation
+and provides more stable gradients.
