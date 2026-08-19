@@ -1,0 +1,16 @@
+MiniViT-Window Test Evaluation
+
+Device:
+cuda
+
+Checkpoint:
+D:\XVLA_Project\vla-learning\experiments\attention-week-project\outputs\mini_vit_window\best.pt
+
+Test Loss:
+2.4712
+
+Test Accuracy:
+0.4004
+
+Accuracy Percentage:
+40.04%
