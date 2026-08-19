@@ -1,0 +1,18 @@
+
+SmallCNN Test Evaluation
+
+Device:
+cuda
+
+Checkpoint:
+D:\XVLA_Project\vla-learning\experiments\attention-week-project\outputs\smallcnn\best.pt
+
+Test Loss:
+2.5667
+
+Test Accuracy:
+0.3602
+
+Accuracy Percentage:
+36.02%
+

@@ -1,0 +1,34 @@
+Device: cuda
+Epoch [1/20] Train Loss:3.9099 Train Acc:0.1081 Val Acc:0.1534
+Saved best checkpoint.
+Epoch [2/20] Train Loss:3.4195 Train Acc:0.1888 Val Acc:0.1964
+Saved best checkpoint.
+Epoch [3/20] Train Loss:3.2103 Train Acc:0.2286 Val Acc:0.2240
+Saved best checkpoint.
+Epoch [4/20] Train Loss:3.0780 Train Acc:0.2534 Val Acc:0.2456
+Saved best checkpoint.
+Epoch [5/20] Train Loss:2.9692 Train Acc:0.2773 Val Acc:0.2632
+Saved best checkpoint.
+Epoch [6/20] Train Loss:2.8857 Train Acc:0.2939 Val Acc:0.2836
+Saved best checkpoint.
+Epoch [7/20] Train Loss:2.8129 Train Acc:0.3112 Val Acc:0.2932
+Saved best checkpoint.
+Epoch [8/20] Train Loss:2.7485 Train Acc:0.3215 Val Acc:0.2846
+Epoch [9/20] Train Loss:2.6972 Train Acc:0.3359 Val Acc:0.2982
+Saved best checkpoint.
+Epoch [10/20] Train Loss:2.6498 Train Acc:0.3457 Val Acc:0.3230
+Saved best checkpoint.
+Epoch [11/20] Train Loss:2.6093 Train Acc:0.3547 Val Acc:0.3138
+Epoch [12/20] Train Loss:2.5661 Train Acc:0.3627 Val Acc:0.3204
+Epoch [13/20] Train Loss:2.5330 Train Acc:0.3682 Val Acc:0.3190
+Epoch [14/20] Train Loss:2.4987 Train Acc:0.3785 Val Acc:0.3304
+Saved best checkpoint.
+Epoch [15/20] Train Loss:2.4761 Train Acc:0.3818 Val Acc:0.3478
+Saved best checkpoint.
+Epoch [16/20] Train Loss:2.4429 Train Acc:0.3885 Val Acc:0.3342
+Epoch [17/20] Train Loss:2.4200 Train Acc:0.3942 Val Acc:0.3402
+Epoch [18/20] Train Loss:2.3996 Train Acc:0.3990 Val Acc:0.3176
+Epoch [19/20] Train Loss:2.3736 Train Acc:0.4038 Val Acc:0.3672
+Saved best checkpoint.
+Epoch [20/20] Train Loss:2.3473 Train Acc:0.4084 Val Acc:0.3620
+Best Val Acc: 0.3672
