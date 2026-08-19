@@ -1,0 +1,16 @@
+MiniViT-Full Test Evaluation
+
+Device:
+cuda
+
+Checkpoint:
+D:\XVLA_Project\vla-learning\experiments\attention-week-project\outputs\mini_vit_full\best.pt
+
+Test Loss:
+2.5809
+
+Test Accuracy:
+0.3790
+
+Accuracy Percentage:
+37.90%
