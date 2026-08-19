@@ -1,0 +1,16 @@
+Patch-LSTM Test Evaluation
+
+Device:
+cuda
+
+Checkpoint:
+D:\XVLA_Project\vla-learning\experiments\attention-week-project\outputs\patch_lstm\best.pt
+
+Test Loss:
+3.3038
+
+Test Accuracy:
+0.2666
+
+Accuracy Percentage:
+26.66%
