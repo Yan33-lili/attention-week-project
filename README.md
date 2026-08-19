@@ -972,3 +972,676 @@ H = 8 attention heads
 N = 64 patches
 
 表示每个 head 学习 patch 与 patch 之间的空间关联。
+
+
+
+
+# Window Attention Implementation for MiniViT-Window
+
+## 1. 实验目标
+
+本实验目标是手写实现 Window Attention，并理解其在 Vision Transformer 中的作用。
+
+传统 Vision Transformer (ViT) 使用 Global Self-Attention：
+
+\[
+Attention(Q,K,V)
+=
+softmax
+(
+\frac{QK^T}{\sqrt{d_k}}
+)
+V
+\]
+
+它允许所有 patch 两两交互，但是随着图像分辨率增加，token 数量快速增长，Attention 的计算复杂度为：
+
+\[
+O(N^2)
+\]
+
+其中：
+
+- N 表示 patch token 数量
+
+
+为了降低计算成本，Swin Transformer 提出了 Window Attention：
+
+将整个 feature map 划分为多个局部窗口，只在每个窗口内部进行 Self-Attention。
+
+
+本实验实现：
+
+- Window Partition
+- Window Reverse
+- Window-based Multi-Head Self-Attention
+
+
+---
+
+# 2. Window Attention 原理
+
+
+## 2.1 Global Attention 的问题
+
+
+假设输入图像经过 Patch Embedding 后得到：
+# Window Attention Implementation for MiniViT-Window
+
+## 1. 实验目标
+
+本实验目标是手写实现 Window Attention，并理解其在 Vision Transformer 中的作用。
+
+传统 Vision Transformer (ViT) 使用 Global Self-Attention：
+
+\[
+Attention(Q,K,V)
+=
+softmax
+(
+\frac{QK^T}{\sqrt{d_k}}
+)
+V
+\]
+
+它允许所有 patch 两两交互，但是随着图像分辨率增加，token 数量快速增长，Attention 的计算复杂度为：
+
+\[
+O(N^2)
+\]
+
+其中：
+
+- N 表示 patch token 数量
+
+
+为了降低计算成本，Swin Transformer 提出了 Window Attention：
+
+将整个 feature map 划分为多个局部窗口，只在每个窗口内部进行 Self-Attention。
+
+
+本实验实现：
+
+- Window Partition
+- Window Reverse
+- Window-based Multi-Head Self-Attention
+
+
+---
+
+# 2. Window Attention 原理
+
+
+## 2.1 Global Attention 的问题
+
+
+假设输入图像经过 Patch Embedding 后得到：
+H × W patch grid
+
+
+
+
+
+例如：
+
+
+
+8 × 8 patches
+
+共有：
+
+64 tokens
+
+
+
+
+
+Global Attention需要计算：
+
+
+\[
+64\times64
+\]
+
+
+
+
+的 Attention Matrix。
+
+
+
+
+如果图像尺寸进一步增加：
+
+
+例如：
+
+
+\[
+224\times224
+\]
+
+
+
+
+token 数量会显著增加，导致计算量快速增长。
+
+
+
+
+---
+
+
+## 2.2 Window Attention 思想
+
+
+
+
+Window Attention 将 feature map 划分为多个固定大小窗口：
+
+
+例如：
+
+
+
+8 × 8 patch grid
+
+window_size = 4
+
++-------+-------+
+| | |
+| Win1 | Win2 |
+| | |
++-------+-------+
+| | |
+| Win3 | Win4 |
+| | |
++-------+-------+
+
+
+
+
+
+每个窗口独立执行 Self-Attention：
+
+
+
+Window
+
+↓
+
+Q,K,V
+
+↓
+
+Attention
+
+↓
+
+Output
+
+
+
+
+
+因此：
+
+
+原来的：
+
+
+\[
+N\times N
+\]
+
+
+
+
+Attention：
+
+
+变为：
+
+
+\[
+M^2\times M^2
+\]
+
+
+
+
+其中：
+
+
+- N：总 token 数量
+- M：window 中 token 数量
+
+
+
+
+计算复杂度降低：
+
+
+Global Attention:
+
+
+\[
+O(N^2)
+\]
+
+
+
+
+Window Attention:
+
+
+\[
+O(\frac{N}{M^2}M^4)
+\]
+
+
+
+
+相比全局 Attention 更适合高分辨率视觉任务。
+
+
+
+
+---
+
+
+# 3. 实现结构
+
+
+
+
+项目结构：
+
+
+
+attention-week-project/
+
+├── models/
+│
+│ ├── attention.py
+│ │ Multi-Head Self-Attention
+│ │
+│ ├── rope.py
+│ │ 2D Axial RoPE
+│ │
+│ └── window_attention.py
+│ Window Attention实现
+│
+
+└── experiments/
+│
+└── week4/
+│
+└── window_attention_demo.py
+Window Attention测试
+
+
+
+
+
+---
+
+
+# 4. 核心实现流程
+
+
+
+
+## 4.1 Window Partition
+
+
+
+
+输入 feature map：
+
+
+\[
+(B,H,W,C)
+\]
+
+
+
+
+其中：
+
+
+- B: batch size
+- H,W: patch grid size
+- C: embedding dimension
+
+
+
+
+例如：
+
+
+
+(B,8,8,64)
+
+
+
+
+
+经过 window_partition：
+
+
+
+(B,H,W,C)
+
+↓
+
+(num_windows*B,
+window_size,
+window_size,
+C)
+
+
+
+
+
+本实验：
+
+
+
+Input:
+
+(2,8,8,64)
+
+window_size=4
+
+Output:
+
+(8,4,4,64)
+
+
+
+
+
+含义：
+
+
+2张图片：
+
+
+每张图片：
+
+
+\[
+\frac84\times\frac84=4
+\]
+
+
+
+
+个窗口。
+
+
+
+
+总窗口数量：
+
+
+\[
+2\times4=8
+\]
+
+
+
+
+---
+
+
+## 4.2 Window 内 Attention
+
+
+
+
+每个窗口：
+
+
+
+4 × 4 patches
+
+
+
+
+
+因此：
+
+
+token数量：
+
+
+\[
+4\times4=16
+\]
+
+
+
+
+输入：
+
+
+\[
+(B_w,N,C)
+\]
+
+
+
+
+其中：
+
+
+- \(B_w\)：窗口数量
+- N=16
+
+
+
+
+执行：
+
+
+\[
+Q=XW_Q
+\]
+
+
+
+
+\[
+K=XW_K
+\]
+
+
+
+
+\[
+V=XW_V
+\]
+
+
+
+
+然后：
+
+
+\[
+Attention(Q,K,V)
+=
+softmax
+(
+\frac{QK^T}{\sqrt{d_k}}
+)
+V
+\]
+
+
+
+
+---
+
+
+# 5. 实验验证
+
+
+
+
+运行：
+
+
+```bash
+python -m experiments.week4.window_attention_demo
+
+输出：
+
+Input:
+torch.Size([2, 8, 8, 64])
+
+
+Windows:
+torch.Size([8, 4, 4, 64])
+
+
+Attention output:
+torch.Size([8, 16, 64])
+
+
+Attention map:
+torch.Size([8, 8, 16, 16])
+6. 输出结果分析
+6.1 输入 Feature Map
+torch.Size([2,8,8,64])
+
+表示：
+
+Batch size = 2
+Patch Grid = 8×8
+Embedding dimension = 64
+
+即：
+
+2张图片
+
+
+↓
+
+
+每张图片64个patch
+
+
+↓
+
+
+每个patch 64维特征
+6.2 Window Partition结果
+torch.Size([8,4,4,64])
+
+表示：
+
+共生成：
+
+2×(8/4)×(8/4)
+
+个窗口：
+
+=8
+
+每个窗口：
+
+4×4
+
+个patch：
+
+=16
+6.3 Attention Output
+torch.Size([8,16,64])
+
+表示：
+
+每个窗口内部：
+
+16个patch token
+每个token保持64维embedding
+
+Window Attention不会改变：
+
+token数量
+embedding dimension
+6.4 Attention Map
+torch.Size([8,8,16,16])
+
+对应：
+
+(B
+w
+	​
+
+,Heads,N,N)
+
+其中：
+
+8个窗口
+8个attention heads
+每个窗口16个token
+
+每个head学习：
+
+16×16
+
+的patch之间关系。
+
+7. Window Attention vs Global Attention
+	Global Attention	Window Attention
+Attention范围	所有patch	局部窗口
+计算复杂度	O(N
+2
+)	降低
+空间关系	全局	局部
+适合任务	小规模图像	高分辨率图像
+代表模型	ViT	Swin Transformer
+8. 关于 Shifted Window Attention
+
+本实验未实现进阶的 Shifted Window Attention。
+
+普通 Window Attention 存在问题：
+
+不同窗口之间没有信息交流。
+
+Swin Transformer 通过窗口移动：
+
+Layer 1:
+
+
+AAAA BBBB
+AAAA BBBB
+
+
+
+
+Layer 2:
+
+
+shifted windows
+
+让不同窗口之间建立连接。
+
+完整 Swin Transformer Block：
+
+Window Attention
+
+
+↓
+
+
+Shifted Window Attention
+
+
+↓
+
+
+MLP
