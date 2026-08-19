@@ -2,37 +2,55 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from models.rope import AxialRoPE2D
+
+
 
 class MultiHeadSelfAttention(nn.Module):
     """
     Hand-written Multi-Head Self-Attention
+    with optional 2D Axial RoPE.
 
     Input:
-        x: (B, N, D)
+        x:
+        (B, N, D)
 
-    B: batch size
-    N: number of tokens
-    D: embedding dimension
+    Output:
+        out:
+        (B, N, D)
+
+        attention_weights:
+        (B, heads, N, N)
     """
 
     def __init__(
         self,
         embed_dim,
-        num_heads
+        num_heads,
+        use_rope=False,
+        grid_size=None
     ):
         super().__init__()
+
 
         assert embed_dim % num_heads == 0, \
             "embed_dim must be divisible by num_heads"
 
+
         self.embed_dim = embed_dim
+
         self.num_heads = num_heads
 
-        # dimension per head
         self.head_dim = embed_dim // num_heads
 
 
-        # Linear projection for Q,K,V
+        self.use_rope = use_rope
+
+
+
+        # -------------------------
+        # Q,K,V projection
+        # -------------------------
 
         self.q_proj = nn.Linear(
             embed_dim,
@@ -50,7 +68,26 @@ class MultiHeadSelfAttention(nn.Module):
         )
 
 
-        # output projection
+        # -------------------------
+        # 2D Axial RoPE
+        # -------------------------
+
+        if use_rope:
+
+            assert grid_size is not None, \
+                "grid_size is required when using RoPE"
+
+
+            self.rope = AxialRoPE2D(
+                dim=self.head_dim,
+                grid_size=grid_size
+            )
+
+
+
+        # -------------------------
+        # Output projection
+        # -------------------------
 
         self.out_proj = nn.Linear(
             embed_dim,
@@ -58,27 +95,36 @@ class MultiHeadSelfAttention(nn.Module):
         )
 
 
-    def forward(self, x):
+
+    def forward(
+        self,
+        x
+    ):
 
         B, N, D = x.shape
 
 
-        # ==========================
+
+        # =========================
         # 1. Generate Q,K,V
-        # ==========================
+        # =========================
 
         Q = self.q_proj(x)
+
         K = self.k_proj(x)
+
         V = self.v_proj(x)
 
 
+
         # shape:
-        # B,N,D
+        # (B,N,D)
 
 
-        # ==========================
-        # 2. Split heads
-        # ==========================
+
+        # =========================
+        # 2. Split into heads
+        # =========================
 
         Q = Q.reshape(
             B,
@@ -102,42 +148,69 @@ class MultiHeadSelfAttention(nn.Module):
         )
 
 
-        # move heads forward
+        # move heads dimension forward
 
-        Q = Q.transpose(1,2)
+        Q = Q.transpose(
+            1,
+            2
+        )
 
-        K = K.transpose(1,2)
+        K = K.transpose(
+            1,
+            2
+        )
 
-        V = V.transpose(1,2)
-
-
-        # Now:
-
-        # Q,K,V:
-        # B, heads, N, head_dim
-
-
-
-        # ==========================
-        # 3. Attention score
-        # ==========================
-
-        scores = torch.matmul(
-            Q,
-            K.transpose(-2,-1)
+        V = V.transpose(
+            1,
+            2
         )
 
 
-        # divide sqrt(dk)
+        # Now:
+        #
+        # Q,K,V:
+        #
+        # (B, heads, N, head_dim)
+
+
+
+        # =========================
+        # 3. Apply 2D Axial RoPE
+        # =========================
+
+        if self.use_rope:
+
+            Q, K = self.rope(
+                Q,
+                K
+            )
+
+
+
+        # =========================
+        # 4. Attention Score
+        # =========================
+
+        scores = torch.matmul(
+            Q,
+            K.transpose(
+                -2,
+                -1
+            )
+        )
+
+
+        # scaled dot product
 
         scores = scores / (
             self.head_dim ** 0.5
         )
 
 
-        # ==========================
-        # 4. Softmax
-        # ==========================
+
+        # =========================
+        # 5. Softmax
+        # =========================
 
         attention_weights = F.softmax(
             scores,
@@ -145,9 +218,10 @@ class MultiHeadSelfAttention(nn.Module):
         )
 
 
-        # ==========================
-        # 5. Weighted sum of V
-        # ==========================
+
+        # =========================
+        # 6. Weighted sum of V
+        # =========================
 
         out = torch.matmul(
             attention_weights,
@@ -155,9 +229,10 @@ class MultiHeadSelfAttention(nn.Module):
         )
 
 
-        # ==========================
-        # 6. Merge heads
-        # ==========================
+
+        # =========================
+        # 7. Merge heads
+        # =========================
 
         out = out.transpose(
             1,
@@ -172,11 +247,14 @@ class MultiHeadSelfAttention(nn.Module):
         )
 
 
-        # ==========================
-        # 7. Final projection
-        # ==========================
 
-        out = self.out_proj(out)
+        # =========================
+        # 8. Output projection
+        # =========================
+
+        out = self.out_proj(
+            out
+        )
 
 
         return out, attention_weights

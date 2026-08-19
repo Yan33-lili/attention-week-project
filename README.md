@@ -484,3 +484,491 @@ torch.Size([2,8,64,64])
 
 
 该模块对应 MiniViT-Full 中 Transformer Encoder 的核心计算部分。
+
+
+
+# 手写 RoPE，并在 MiniViT-Full Attention 中实现 2D Axial RoPE
+
+## 1. 实验目标
+
+本实验目标是从零实现 Rotary Position Embedding (RoPE)，并将其应用到基于 Vision Transformer (ViT) 的 Multi-Head Self-Attention 中，实现适用于二维 patch grid 的 2D Axial RoPE。
+
+Transformer 的 Self-Attention 本身不包含位置信息，只能学习 token 之间的相关性，而无法知道每个 patch 在图像中的空间位置。因此需要引入位置编码。
+
+相比传统的 Absolute Positional Embedding：
+
+\[
+X'=X+P
+\]
+
+RoPE 不直接添加位置向量，而是通过旋转 Query 和 Key，使 Attention score 中自然包含位置信息。
+
+本实验实现：
+
+- 1D Rotary Position Embedding
+- 2D Axial Rotary Position Embedding
+- 将 2D RoPE 集成到手写 Multi-Head Self-Attention 中
+
+
+---
+
+# 2. RoPE 数学原理
+
+## 2.1 一维 RoPE
+
+RoPE 的核心思想是：
+
+对于输入向量中的两个维度：
+
+\[
+(x_1,x_2)
+\]
+
+根据当前位置生成旋转角度：
+
+\[
+\theta
+\]
+
+
+通过二维旋转矩阵：
+
+\[
+\begin{bmatrix}
+cos\theta & -sin\theta\\
+sin\theta & cos\theta
+\end{bmatrix}
+\]
+
+得到新的表示：
+
+\[
+\begin{bmatrix}
+x'_1\\
+x'_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+cos\theta & -sin\theta\\
+sin\theta & cos\theta
+\end{bmatrix}
+\begin{bmatrix}
+x_1\\
+x_2
+\end{bmatrix}
+\]
+
+
+在 Attention 中，RoPE 作用于 Query 和 Key：
+
+\[
+Q'=RoPE(Q)
+\]
+
+\[
+K'=RoPE(K)
+\]
+
+
+随后计算：
+
+\[
+Attention(Q',K',V)
+=
+softmax
+(
+\frac{Q'K'^T}{\sqrt{d_k}}
+)
+V
+\]
+
+
+RoPE 不改变 token 数量和 embedding 维度，只改变向量表示方式。
+
+
+---
+
+# 3. 为什么需要 2D Axial RoPE？
+
+文本 Transformer 中 token 通常是一维序列：
+token1 token2 token3 ...
+
+
+
+
+
+但是 Vision Transformer 中输入来自图像 patch：
+
+
+例如：
+
+
+
+8 × 8 patch grid
+
+(0,0) (0,1) (0,2) ... (0,7)
+
+(1,0) (1,1) (1,2) ... (1,7)
+
+...
+
+(7,0) (7,1) ... (7,7)
+
+
+
+
+
+每个 patch 同时具有：
+
+
+- 横向位置 (column)
+- 纵向位置 (row)
+
+
+
+
+因此二维图像不能简单使用一维位置编码。
+
+
+
+
+2D Axial RoPE 将 embedding dimension 拆分为两个方向：
+
+
+
+Embedding Dimension
+
+    |
+    |
+
++---------------+
+| |
+| Row RoPE |
+| |
++---------------+
+
++---------------+
+| |
+| Column RoPE |
+| |
++---------------+
+
+
+
+
+
+分别对：
+
+
+- height axis
+- width axis
+
+
+进行旋转编码。
+
+
+
+
+---
+
+
+# 4. 实现结构
+
+
+
+
+项目结构：
+
+
+
+attention-week-project/
+
+├── models/
+│
+│ ├── attention.py
+│ │ 手写 Multi-Head Self-Attention
+│ │ 支持 RoPE 开关
+│ │
+│ └── rope.py
+│ RotaryEmbedding
+│ AxialRoPE2D
+│
+│
+└── experiments/
+│
+└── week4/
+│
+├── mha_demo.py
+│ 普通 Multi-Head Attention 测试
+│
+├── rope_demo.py
+│ 2D patch grid 测试
+│
+├── rope_apply_demo.py
+│ RoPE Q/K旋转测试
+│
+└── mha_rope_demo.py
+MiniViT-style Attention + RoPE测试
+
+
+
+
+
+---
+
+
+# 5. 核心实现逻辑
+
+
+
+
+## 5.1 Multi-Head Self-Attention
+
+
+输入：
+
+
+\[
+X\in R^{B\times N\times D}
+\]
+
+
+
+
+其中：
+
+
+- B: batch size
+- N: patch token数量
+- D: embedding dimension
+
+
+
+
+首先生成：
+
+
+\[
+Q=XW_Q
+\]
+
+
+\[
+K=XW_K
+\]
+
+
+\[
+V=XW_V
+\]
+
+
+
+
+然后划分多个 attention heads：
+
+
+
+(B,N,D)
+
+↓
+
+(B,heads,N,head_dim)
+
+
+
+
+
+---
+
+
+## 5.2 加入 2D Axial RoPE
+
+
+
+
+原始流程：
+
+
+
+Q,K,V
+
+↓
+
+Attention
+
+↓
+
+Output
+
+
+
+
+
+加入 RoPE 后：
+
+
+
+Q,K,V
+
+↓
+
+2D Axial RoPE(Q,K)
+
+↓
+
+Attention
+
+↓
+
+Output
+
+
+
+
+
+注意：
+
+
+RoPE 只作用于：
+
+
+- Query
+- Key
+
+
+
+
+不作用于：
+
+
+- Value
+
+
+
+
+原因：
+
+
+Query 和 Key 决定 token 间的匹配关系，而 Value 负责信息传递。
+
+
+
+
+---
+
+
+# 6. 实验验证
+
+
+
+
+## 6.1 Patch Grid位置验证
+
+
+
+
+运行：
+
+
+```bash
+python -m experiments.week4.rope_demo
+
+输出：
+
+Number of patch positions:
+64
+
+
+First 10 positions:
+[
+(0,0),
+(0,1),
+(0,2),
+(0,3),
+(0,4),
+(0,5),
+(0,6),
+(0,7),
+(1,0),
+(1,1)
+]
+
+说明：
+
+8×8 patch grid 被正确转换为二维空间坐标。
+
+6.2 RoPE Q/K旋转验证
+
+运行：
+
+python -m experiments.week4.rope_apply_demo
+
+输出：
+
+Input Q:
+torch.Size([2,8,64,32])
+
+
+Output Q:
+torch.Size([2,8,64,32])
+
+
+Input K:
+torch.Size([2,8,64,32])
+
+
+Output K:
+torch.Size([2,8,64,32])
+
+说明：
+
+RoPE不会改变 Query 和 Key 的 tensor shape，只改变其内部表示。
+
+6.3 MiniViT-Full Attention + RoPE验证
+
+运行：
+
+python -m experiments.week4.mha_rope_demo
+
+输出：
+
+Input:
+torch.Size([2,64,256])
+
+
+Output:
+torch.Size([2,64,256])
+
+
+Attention map:
+torch.Size([2,8,64,64])
+
+结果解释：
+
+输入：
+
+(B,N,D)
+
+其中：
+
+B = 2
+N = 64 patch tokens
+D = 256 embedding dimension
+
+输出保持：
+
+(B,N,D)
+
+说明 Attention 模块结构保持正确。
+
+Attention map：
+
+(B,H,N,N)
+
+其中：
+
+H = 8 attention heads
+N = 64 patches
+
+表示每个 head 学习 patch 与 patch 之间的空间关联。
