@@ -1,0 +1,57 @@
+[
+    {
+        "tokens": 64,
+        "height": 8,
+        "width": 8,
+        "full_time": 0.0022196019999682903,
+        "window_time": 0.0005611080001108348,
+        "full_memory": 0.015625,
+        "window_memory": 0.00390625,
+        "full_flops": 524288,
+        "window_flops": 131072
+    },
+    {
+        "tokens": 128,
+        "height": 8,
+        "width": 16,
+        "full_time": 6.676799850538373e-05,
+        "window_time": 6.520400056615472e-05,
+        "full_memory": 0.0625,
+        "window_memory": 0.0078125,
+        "full_flops": 2097152,
+        "window_flops": 262144
+    },
+    {
+        "tokens": 256,
+        "height": 16,
+        "width": 16,
+        "full_time": 0.00012072800192981959,
+        "window_time": 7.679400034248828e-05,
+        "full_memory": 0.25,
+        "window_memory": 0.015625,
+        "full_flops": 8388608,
+        "window_flops": 524288
+    },
+    {
+        "tokens": 512,
+        "height": 16,
+        "width": 32,
+        "full_time": 0.00012384200002998113,
+        "window_time": 0.00010015999898314476,
+        "full_memory": 1.0,
+        "window_memory": 0.03125,
+        "full_flops": 33554432,
+        "window_flops": 1048576
+    },
+    {
+        "tokens": 1024,
+        "height": 32,
+        "width": 32,
+        "full_time": 0.0001162620005197823,
+        "window_time": 7.209600182250141e-05,
+        "full_memory": 4.0,
+        "window_memory": 0.0625,
+        "full_flops": 134217728,
+        "window_flops": 2097152
+    }
+]

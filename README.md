@@ -2434,3 +2434,448 @@ outputs/figures/attention_scaling/
 ├── attention_scaling_three_panel.png
 
 └── attention_scaling_results.json
+
+
+
+
+
+# Task 6: Full Attention 与 Window Attention 效率比较实验
+
+## 1. 实验目的
+
+本实验旨在比较 Full Attention 与 Window Attention 在视觉 Transformer 中的计算效率差异。
+
+主要比较三个指标：
+
+1. 计算量（FLOPs）
+2. Attention Map 显存占用
+3. 实际 GPU 运行时间（Runtime）
+
+通过实验验证：
+
+- Full Attention 的计算复杂度为：
+
+\[
+O(N^2C)
+\]
+
+- Window Attention 的计算复杂度为：
+
+\[
+O(NM^2C)
+\]
+
+其中：
+
+- \(N\)：输入 token 数量（patch 数量）
+- \(C\)：embedding dimension
+- \(M\)：window size
+
+
+---
+
+# 2. 方法介绍
+
+
+## 2.1 Full Attention
+
+Full Self-Attention 会计算所有 token 两两之间的关系。
+
+输入：
+
+\[
+X\in R^{B\times N\times C}
+\]
+
+
+计算：
+
+\[
+Attention(Q,K,V)
+=
+softmax(\frac{QK^T}{\sqrt{d_k}})V
+\]
+
+
+其中：
+
+\[
+QK^T
+\]
+
+产生：
+
+\[
+N\times N
+\]
+
+的 attention map。
+
+
+因此：
+
+### 计算复杂度
+
+\[
+O(N^2C)
+\]
+
+
+### Memory
+
+Attention map 大小：
+
+\[
+N^2
+\]
+
+
+随着 token 数增加，计算量和显存需求快速增长。
+
+
+---
+
+## 2.2 Window Attention
+
+Window Attention 将输入划分为多个局部窗口。
+
+每个窗口大小：
+
+\[
+M\times M
+\]
+
+
+每个 window 内 token 数：
+
+\[
+M^2
+\]
+
+
+窗口数量：
+
+\[
+\frac{N}{M^2}
+\]
+
+
+每个窗口计算：
+
+\[
+O(M^4C)
+\]
+
+
+总复杂度：
+
+\[
+\frac{N}{M^2}\times M^4C
+\]
+
+
+因此：
+
+\[
+\boxed{
+O(NM^2C)
+}
+\]
+
+
+相比 Full Attention：
+
+\[
+\frac{N^2C}{NM^2C}
+=
+\frac{N}{M^2}
+\]
+
+
+当 token 数量较大时，可以显著降低计算成本。
+
+
+---
+
+# 3. 实验设置
+
+
+## Hardware
+
+- Device: CUDA GPU
+
+
+## Model Configuration
+
+Embedding dimension:
+
+\[
+C=64
+\]
+
+
+Window size:
+
+\[
+M=4
+\]
+
+
+Batch size:
+
+\[
+B=1
+\]
+
+
+测试不同 patch grid：
+
+|Grid|Tokens|
+|-|-|
+|8×8|64|
+|8×16|128|
+|16×16|256|
+|16×32|512|
+|32×32|1024|
+
+
+---
+
+# 4. 实验结果
+
+
+## 4.1 FLOPs 对比
+
+
+|Tokens|Full Attention FLOPs|Window Attention FLOPs|Reduction|
+|-|-|-|-|
+|64|524288|131072|4×|
+|128|2097152|262144|8×|
+|256|8388608|524288|16×|
+|512|33554432|1048576|32×|
+|1024|134217728|2097152|64×|
+
+
+实验结果符合理论分析：
+
+\[
+Reduction=
+\frac{N}{M^2}
+\]
+
+
+随着 token 数增加，Window Attention 的计算优势逐渐扩大。
+
+
+---
+
+## 4.2 Attention Map Memory 对比
+
+
+单位：MB
+
+
+|Tokens|Full Attention|Window Attention|Reduction|
+|-|-|-|-|
+|64|0.015625|0.003906|4×|
+|128|0.0625|0.007812|8×|
+|256|0.25|0.015625|16×|
+|512|1.0|0.03125|32×|
+|1024|4.0|0.0625|64×|
+
+
+Full Attention 的 memory：
+
+\[
+O(N^2)
+\]
+
+
+而 Window Attention：
+
+\[
+O(NM^2)
+\]
+
+
+因此随着输入规模扩大，两者差距快速增加。
+
+
+---
+
+# 4.3 Runtime 对比
+
+
+实验同时测试了 GPU 实际运行时间。
+
+
+结果：
+
+|Tokens|Full Attention(s)|Window Attention(s)|
+|-|-|-|
+|64|0.0022196|0.0005611|
+|128|0.0000668|0.0000652|
+|256|0.0001207|0.0000768|
+|512|0.0001238|0.0001002|
+|1024|0.0001163|0.0000721|
+
+
+Runtime 曲线：
+
+![Attention Efficiency](outputs/figures/attention_efficiency/attention_efficiency.png)
+
+
+实验观察：
+
+- Window Attention 在所有测试规模下均保持更低运行时间。
+- 当输入规模较小时，由于 GPU kernel launch overhead 的影响，runtime 不完全呈现理论复杂度增长趋势。
+- FLOPs 和 Attention Map Memory 更能反映两种 Attention 机制在大规模视觉任务中的计算差异。
+
+
+---
+
+# 5. 实验分析
+
+
+## 5.1 为什么 Window Attention 更高效？
+
+
+Full Attention:
+
+每一个 token 都需要与所有 token 计算关系：
+
+\[
+N\times N
+\]
+
+
+因此 token 数增加时：
+
+\[
+O(N^2)
+\]
+
+增长。
+
+
+---
+
+Window Attention:
+
+每个 token 只关注所在窗口：
+
+\[
+M^2
+\]
+
+个 token。
+
+
+因此：
+
+\[
+O(NM^2)
+\]
+
+
+当：
+
+\[
+M^2 \ll N
+\]
+
+
+计算量显著降低。
+
+
+---
+
+# 6. 与 Vision Transformer 的联系
+
+
+标准 ViT 使用 Full Attention：
+
+优点：
+
+- 全局信息交互能力强
+
+
+缺点：
+
+- 输入分辨率提高时计算成本快速增加
+
+
+Window Attention（例如 Swin Transformer）：
+
+优点：
+
+- 降低 Attention 计算复杂度
+- 支持更高分辨率输入
+
+
+缺点：
+
+- 局部窗口限制了直接全局信息交互
+
+
+因此实际视觉 Transformer 通常结合：
+
+- Window Attention
+- Shifted Window Attention
+
+在效率和全局建模能力之间取得平衡。
+
+
+---
+
+# 7. Conclusion
+
+
+本实验验证了 Full Attention 与 Window Attention 在计算效率上的理论差异。
+
+实验结果表明：
+
+1. Full Attention 的 FLOPs 和 Attention Map Memory 随 token 数量平方增长：
+
+\[
+O(N^2)
+\]
+
+
+2. Window Attention 将复杂度降低为：
+
+\[
+O(NM^2)
+\]
+
+
+3. 随着 token 数量增加，Window Attention 在计算量和显存占用方面优势越来越明显。
+
+因此，Window Attention 是视觉 Transformer 处理高分辨率图像的重要优化方法。
+
+
+---
+
+# 8. Output Files
+
+
+实验生成：
+outputs/
+
+└── figures/
+
+└── attention_efficiency/
+
+    ├── attention_efficiency.png
+
+    └── efficiency_results.json
+
+
+实验脚本：
+
+
+experiments/
+
+└── week4/
+
+└── attention_efficiency_benchmark.py
