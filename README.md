@@ -271,60 +271,32 @@ torch.Size([2, 8, 64, 64])
 - `64`：Query token 数量
 - `64`：Key token 数量
 
-
-
-
 因此：
-
-
 每一个 attention head 都会产生一个：
-
-
 
 64 × 64
 
-
-
 的注意力矩阵。
 
-
-
-
 矩阵中的元素：
-
 
 \[
 Attention(i,j)
 \]
 
-
 表示：
-
-
 > 在更新第 i 个 patch 的表示时，第 j 个 patch 对它的重要程度。
-
-
-
 
 例如：
 
-
 如果：
-
-
-
 Attention(1,5)=0.8
-
-
 
 表示：
 
-
 第1个patch在更新自身特征时，会大量参考第5个patch提供的信息。
 
-
 ---
-
 
 # 实现验证总结
 
@@ -334,12 +306,9 @@ Attention(1,5)=0.8
 
 实现包括：
 
-
 ## 1. Query、Key、Value生成
 
-
 通过可学习线性层：
-
 
 \[
 Q=XW_Q
@@ -357,12 +326,7 @@ V=XW_V
 
 
 
-
 将输入 token 映射到不同的信息空间。
-
-
-
-
 ---
 
 
@@ -376,18 +340,11 @@ V=XW_V
 Score=\frac{QK^T}{\sqrt{d_k}}
 \]
 
-
-
-
 然后通过 Softmax 得到 Attention Weight：
-
 
 \[
 A=softmax(Score)
 \]
-
-
-
 
 ---
 
@@ -404,12 +361,7 @@ Output=AV
 
 
 
-
 使每个 patch 获得来自其他 patch 的上下文信息。
-
-
-
-
 ---
 
 
@@ -624,13 +576,7 @@ token1 token2 token3 ...
 - 横向位置 (column)
 - 纵向位置 (row)
 
-
-
-
 因此二维图像不能简单使用一维位置编码。
-
-
-
 
 2D Axial RoPE 将 embedding dimension 拆分为两个方向：
 
@@ -665,21 +611,13 @@ Embedding Dimension
 
 
 进行旋转编码。
-
-
-
-
 ---
 
 
 # 4. 实现结构
 
 
-
-
 项目结构：
-
-
 
 attention-week-project/
 
@@ -710,17 +648,9 @@ attention-week-project/
 └── mha_rope_demo.py
 MiniViT-style Attention + RoPE测试
 
-
-
-
-
 ---
 
-
 # 5. 核心实现逻辑
-
-
-
 
 ## 5.1 Multi-Head Self-Attention
 
@@ -733,8 +663,6 @@ X\in R^{B\times N\times D}
 \]
 
 
-
-
 其中：
 
 
@@ -743,10 +671,7 @@ X\in R^{B\times N\times D}
 - D: embedding dimension
 
 
-
-
 首先生成：
-
 
 \[
 Q=XW_Q
@@ -775,20 +700,12 @@ V=XW_V
 
 (B,heads,N,head_dim)
 
-
-
-
-
 ---
-
 
 ## 5.2 加入 2D Axial RoPE
 
 
-
-
 原始流程：
-
 
 
 Q,K,V
@@ -802,11 +719,7 @@ Attention
 Output
 
 
-
-
-
 加入 RoPE 后：
-
 
 
 Q,K,V
@@ -824,9 +737,6 @@ Attention
 Output
 
 
-
-
-
 注意：
 
 
@@ -836,14 +746,10 @@ RoPE 只作用于：
 - Query
 - Key
 
-
-
-
 不作用于：
 
 
 - Value
-
 
 
 
@@ -852,24 +758,14 @@ RoPE 只作用于：
 
 Query 和 Key 决定 token 间的匹配关系，而 Value 负责信息传递。
 
-
-
-
 ---
 
 
 # 6. 实验验证
 
-
-
-
 ## 6.1 Patch Grid位置验证
 
-
-
-
 运行：
-
 
 ```bash
 python -m experiments.week4.rope_demo
@@ -972,8 +868,6 @@ H = 8 attention heads
 N = 64 patches
 
 表示每个 head 学习 patch 与 patch 之间的空间关联。
-
-
 
 
 # Window Attention Implementation for MiniViT-Window
@@ -1079,12 +973,7 @@ O(N^2)
 H × W patch grid
 
 
-
-
-
 例如：
-
-
 
 8 × 8 patches
 
@@ -1093,23 +982,13 @@ H × W patch grid
 64 tokens
 
 
-
-
-
 Global Attention需要计算：
-
 
 \[
 64\times64
 \]
 
-
-
-
 的 Attention Matrix。
-
-
-
 
 如果图像尺寸进一步增加：
 
@@ -1122,28 +1001,17 @@ Global Attention需要计算：
 \]
 
 
-
-
 token 数量会显著增加，导致计算量快速增长。
-
-
 
 
 ---
 
-
 ## 2.2 Window Attention 思想
-
-
 
 
 Window Attention 将 feature map 划分为多个固定大小窗口：
 
-
 例如：
-
-
-
 8 × 8 patch grid
 
 window_size = 4
@@ -1159,11 +1027,7 @@ window_size = 4
 +-------+-------+
 
 
-
-
-
 每个窗口独立执行 Self-Attention：
-
 
 
 Window
@@ -1180,10 +1044,6 @@ Attention
 
 Output
 
-
-
-
-
 因此：
 
 
@@ -1193,9 +1053,6 @@ Output
 \[
 N\times N
 \]
-
-
-
 
 Attention：
 
@@ -1207,57 +1064,33 @@ Attention：
 M^2\times M^2
 \]
 
-
-
-
 其中：
-
 
 - N：总 token 数量
 - M：window 中 token 数量
 
 
-
-
 计算复杂度降低：
 
-
 Global Attention:
-
 
 \[
 O(N^2)
 \]
 
-
-
-
 Window Attention:
-
 
 \[
 O(\frac{N}{M^2}M^4)
 \]
 
-
-
-
 相比全局 Attention 更适合高分辨率视觉任务。
-
-
-
 
 ---
 
-
 # 3. 实现结构
 
-
-
-
 项目结构：
-
-
 
 attention-week-project/
 
@@ -1280,56 +1113,32 @@ attention-week-project/
 └── window_attention_demo.py
 Window Attention测试
 
-
-
-
-
 ---
 
-
 # 4. 核心实现流程
-
-
-
 
 ## 4.1 Window Partition
 
 
-
-
 输入 feature map：
-
 
 \[
 (B,H,W,C)
 \]
 
 
-
-
 其中：
-
 
 - B: batch size
 - H,W: patch grid size
 - C: embedding dimension
 
-
-
-
 例如：
-
 
 
 (B,8,8,64)
 
-
-
-
-
 经过 window_partition：
-
-
 
 (B,H,W,C)
 
@@ -1341,12 +1150,7 @@ window_size,
 C)
 
 
-
-
-
 本实验：
-
-
 
 Input:
 
@@ -1358,98 +1162,59 @@ Output:
 
 (8,4,4,64)
 
-
-
-
-
 含义：
-
 
 2张图片：
 
-
 每张图片：
-
 
 \[
 \frac84\times\frac84=4
 \]
 
-
-
-
 个窗口。
 
-
-
-
 总窗口数量：
-
-
 \[
 2\times4=8
 \]
 
-
-
-
 ---
-
 
 ## 4.2 Window 内 Attention
 
-
-
-
 每个窗口：
-
-
 
 4 × 4 patches
 
 
-
-
-
 因此：
 
-
 token数量：
-
 
 \[
 4\times4=16
 \]
 
 
-
-
 输入：
-
 
 \[
 (B_w,N,C)
 \]
 
 
-
-
 其中：
-
 
 - \(B_w\)：窗口数量
 - N=16
 
 
-
-
 执行：
-
 
 \[
 Q=XW_Q
 \]
-
 
 
 
@@ -1459,16 +1224,13 @@ K=XW_K
 
 
 
-
 \[
 V=XW_V
 \]
 
 
 
-
 然后：
-
 
 \[
 Attention(Q,K,V)
@@ -1481,14 +1243,10 @@ V
 \]
 
 
-
-
 ---
 
 
 # 5. 实验验证
-
-
 
 
 运行：
@@ -2270,7 +2028,6 @@ attention_scaling_three_panel.png
 
 ## (1) Attention Score Standard Deviation
 
-
 展示：
 
 \[
@@ -2434,9 +2191,6 @@ outputs/figures/attention_scaling/
 ├── attention_scaling_three_panel.png
 
 └── attention_scaling_results.json
-
-
-
 
 
 # Task 6: Full Attention 与 Window Attention 效率比较实验

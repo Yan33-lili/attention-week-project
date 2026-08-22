@@ -182,7 +182,10 @@ class AxialRoPE2D(nn.Module):
 
         self.dim = dim
 
-        self.grid_size = grid_size
+        if isinstance(grid_size, tuple):
+            self.grid_h, self.grid_w = grid_size
+        else:
+            self.grid_h = grid_w = grid_size
 
 
         # Half dimensions for row and column
@@ -191,16 +194,14 @@ class AxialRoPE2D(nn.Module):
 
 
         self.row_rope = RotaryEmbedding(
-            axis_dim,
-            max_position_embeddings=grid_size,
-            base=base
+            dim // 2,
+            grid_size[0]
         )
 
 
         self.col_rope = RotaryEmbedding(
-            axis_dim,
-            max_position_embeddings=grid_size,
-            base=base
+            dim // 2,
+            grid_size[1]
         )
 
 
@@ -225,8 +226,8 @@ class AxialRoPE2D(nn.Module):
 
 
         assert N == (
-            self.grid_size *
-            self.grid_size
+            self.grid_h,
+            self.grid_w
         )
 
 
@@ -251,9 +252,9 @@ class AxialRoPE2D(nn.Module):
 
         positions = []
 
-        for i in range(self.grid_size):
+        for i in range(self.grid_h):
 
-            for j in range(self.grid_size):
+            for j in range(self.grid_w):
 
                 positions.append(
                     (i,j)

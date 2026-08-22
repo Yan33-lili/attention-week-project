@@ -1,0 +1,271 @@
+{
+    "seed": 42,
+    "no_pos_vs_rope2d": {
+        "common_parameter_count": 71,
+        "mismatch_count": 0,
+        "max_abs_diff": 0.0,
+        "mismatches": []
+    },
+    "no_pos_vs_absolute": {
+        "common_parameter_count": 71,
+        "mismatch_count": 51,
+        "max_abs_diff": 0.14429159462451935,
+        "mismatches": [
+            {
+                "name": "blocks.0.attn.k_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13543915748596191
+            },
+            {
+                "name": "blocks.0.attn.k_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14334556460380554
+            },
+            {
+                "name": "blocks.0.attn.out_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1370861828327179
+            },
+            {
+                "name": "blocks.0.attn.out_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14363312721252441
+            },
+            {
+                "name": "blocks.0.attn.q_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1341387927532196
+            },
+            {
+                "name": "blocks.0.attn.q_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14391817152500153
+            },
+            {
+                "name": "blocks.0.attn.v_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13987299799919128
+            },
+            {
+                "name": "blocks.0.attn.v_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1434350609779358
+            },
+            {
+                "name": "blocks.0.mlp.fc1.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13922566175460815
+            },
+            {
+                "name": "blocks.0.mlp.fc1.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1438423991203308
+            },
+            {
+                "name": "blocks.0.mlp.fc2.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.06852510571479797
+            },
+            {
+                "name": "blocks.0.mlp.fc2.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.07191003859043121
+            },
+            {
+                "name": "blocks.1.attn.k_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1383991837501526
+            },
+            {
+                "name": "blocks.1.attn.k_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14341357350349426
+            },
+            {
+                "name": "blocks.1.attn.out_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14362937211990356
+            },
+            {
+                "name": "blocks.1.attn.out_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14397692680358887
+            },
+            {
+                "name": "blocks.1.attn.q_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13442584872245789
+            },
+            {
+                "name": "blocks.1.attn.q_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14429159462451935
+            },
+            {
+                "name": "blocks.1.attn.v_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13535642623901367
+            },
+            {
+                "name": "blocks.1.attn.v_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14364048838615417
+            },
+            {
+                "name": "blocks.1.mlp.fc1.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14067035913467407
+            },
+            {
+                "name": "blocks.1.mlp.fc1.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1437622606754303
+            },
+            {
+                "name": "blocks.1.mlp.fc2.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.0719623863697052
+            },
+            {
+                "name": "blocks.1.mlp.fc2.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.07197050750255585
+            },
+            {
+                "name": "blocks.2.attn.k_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13728156685829163
+            },
+            {
+                "name": "blocks.2.attn.k_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14392203092575073
+            },
+            {
+                "name": "blocks.2.attn.out_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14098547399044037
+            },
+            {
+                "name": "blocks.2.attn.out_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14361132681369781
+            },
+            {
+                "name": "blocks.2.attn.q_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13530296087265015
+            },
+            {
+                "name": "blocks.2.attn.q_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14375586807727814
+            },
+            {
+                "name": "blocks.2.attn.v_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13051223754882812
+            },
+            {
+                "name": "blocks.2.attn.v_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14414699375629425
+            },
+            {
+                "name": "blocks.2.mlp.fc1.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1337113380432129
+            },
+            {
+                "name": "blocks.2.mlp.fc1.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14397603273391724
+            },
+            {
+                "name": "blocks.2.mlp.fc2.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.0684194415807724
+            },
+            {
+                "name": "blocks.2.mlp.fc2.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.07201635837554932
+            },
+            {
+                "name": "blocks.3.attn.k_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1415361762046814
+            },
+            {
+                "name": "blocks.3.attn.k_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14355045557022095
+            },
+            {
+                "name": "blocks.3.attn.out_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13693615794181824
+            },
+            {
+                "name": "blocks.3.attn.out_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14358794689178467
+            },
+            {
+                "name": "blocks.3.attn.q_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13792219758033752
+            },
+            {
+                "name": "blocks.3.attn.q_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14362755417823792
+            },
+            {
+                "name": "blocks.3.attn.v_proj.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1288006603717804
+            },
+            {
+                "name": "blocks.3.attn.v_proj.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14383536577224731
+            },
+            {
+                "name": "blocks.3.mlp.fc1.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.13871818780899048
+            },
+            {
+                "name": "blocks.3.mlp.fc1.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14395028352737427
+            },
+            {
+                "name": "blocks.3.mlp.fc2.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.06803114712238312
+            },
+            {
+                "name": "blocks.3.mlp.fc2.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.07193680107593536
+            },
+            {
+                "name": "cls_token",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.07738329470157623
+            },
+            {
+                "name": "head.bias",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.1393016278743744
+            },
+            {
+                "name": "head.weight",
+                "reason": "value mismatch",
+                "max_abs_diff": 0.14305782318115234
+            }
+        ]
+    }
+}
