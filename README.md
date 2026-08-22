@@ -1647,51 +1647,790 @@ Shifted Window Attention
 MLP
 
 
-# Scaled vs Unscaled Attention Experiment
+# Scaled Attention vs Unscaled Attention 数值实验
 
 
-## 1. Motivation
+## 1. 实验目的
 
-Why divide by sqrt(d_k)
+本实验旨在验证 Transformer 中 Scaled Dot-Product Attention 中缩放因子：
 
+\[
+\frac{1}{\sqrt{d_k}}
+\]
 
-## 2. Mathematical Derivation
+的必要性。
 
+实验比较两种 Attention score：
 
-Var(QK^T)=d_k
+### Unscaled Attention
 
-
-Scaling keeps variance stable
-
-
-## 3. Experimental Setup
-
-Q,K:
-random Gaussian
-
-N=64
-d_k=64
+\[
+S = QK^T
+\]
 
 
-## 4. Results
+### Scaled Attention
+
+\[
+S=\frac{QK^T}{\sqrt{d_k}}
+\]
 
 
-### Score distribution
+随着 Query/Key 维度 \(d_k\) 增大，观察：
 
-(插图)
-
-
-### Attention distribution
-
-(插图)
+1. Attention score 的标准差变化
+2. Softmax attention 分布的熵变化
+3. Softmax Jacobian sensitivity 变化
 
 
-### Entropy comparison
+实验目标：
 
-(插图)
+验证不进行 scaling 时：
+
+- attention logits 方差随 \(d_k\) 增大
+- softmax 分布逐渐尖锐
+- 梯度敏感性下降
+
+并说明：
+
+\[
+\frac{1}{\sqrt{d_k}}
+\]
+
+如何缓解 softmax saturation 问题。
 
 
-## 5. Conclusion
+---
 
-Scaled Attention prevents softmax saturation
-and provides more stable gradients.
+# 2. 实验设置
+
+
+## 2.1 实验参数
+
+
+| 参数 | 设置 |
+|-|-|
+| Sequence Length | 64 |
+| \(d_k\) | 16,32,64,128,256,512 |
+| Trials | 20 |
+| Random Seed | 42 |
+
+
+对于每一个 \(d_k\)，随机生成：
+
+\[
+Q,K\sim N(0,1)
+\]
+
+
+计算：
+
+\[
+QK^T
+\]
+
+以及：
+
+\[
+\frac{QK^T}{\sqrt{d_k}}
+\]
+
+
+实验结果保存：
+outputs/figures/attention_scaling/
+
+
+包括：
+
+
+attention_scaling_three_panel.png
+
+attention_scaling_results.json
+
+
+
+---
+
+# 3. Attention Score 数学分析
+
+
+## 3.1 Unscaled Attention
+
+
+Attention score：
+
+\[
+S=QK^T
+\]
+
+
+其中：
+
+\[
+S_{ij}=q_i^Tk_j
+\]
+
+
+展开：
+
+\[
+S_{ij}
+=
+\sum_{m=1}^{d_k}
+q_{im}k_{jm}
+\]
+
+
+假设：
+
+\[
+q,k\sim N(0,1)
+\]
+
+
+则：
+
+\[
+E(q_mk_m)=0
+\]
+
+
+并且：
+
+\[
+Var(q_mk_m)=1
+\]
+
+
+因此：
+
+\[
+Var(S_{ij})
+=
+d_k
+\]
+
+
+所以：
+
+\[
+Std(S_{ij})
+=
+\sqrt{d_k}
+\]
+
+
+即：
+
+随着：
+
+\[
+d_k\uparrow
+\]
+
+Unscaled Attention score 的尺度会不断增大。
+
+
+---
+
+## 3.2 Scaled Attention
+
+
+Scaled Attention：
+
+\[
+S=
+\frac{QK^T}{\sqrt{d_k}}
+\]
+
+
+因此：
+
+\[
+Var(S)
+=
+\frac{d_k}{d_k}
+=
+1
+\]
+
+
+所以：
+
+\[
+Std(S)\approx1
+\]
+
+
+缩放操作使 attention logits 保持稳定范围。
+
+
+---
+
+# 4. Softmax Entropy 分析
+
+
+Attention probability：
+
+\[
+p_i=
+softmax(S_i)
+\]
+
+
+计算 entropy：
+
+
+\[
+H(p)
+=
+-\sum_i p_i\log p_i
+\]
+
+
+为了消除 sequence length 的影响，使用 normalized entropy：
+
+
+\[
+H_{norm}
+=
+\frac{H(p)}
+{\log L}
+\]
+
+
+其中：
+
+\[
+L=64
+\]
+
+
+当 entropy 降低时：
+
+表示 attention 分布更加集中。
+
+
+如果 logits 过大：
+
+\[
+softmax(S)
+\]
+
+会趋近于：
+
+\[
+[1,0,0,...]
+\]
+
+
+导致：
+
+\[
+H_{norm}\rightarrow0
+\]
+
+
+这称为：
+
+**Softmax saturation**。
+
+
+---
+
+# 5. Softmax Jacobian Sensitivity
+
+
+Softmax：
+
+\[
+p=softmax(s)
+\]
+
+
+其 Jacobian 为：
+
+
+\[
+J(p)
+=
+diag(p)-pp^T
+\]
+
+
+本实验使用：
+
+\[
+||J(p)||_F
+\]
+
+
+作为 softmax sensitivity 指标。
+
+
+当 softmax 输出接近 one-hot：
+
+\[
+p=[1,0,0,...]
+\]
+
+
+Jacobian 会趋近于 0：
+
+\[
+||J(p)||_F\rightarrow0
+\]
+
+
+表示：
+
+模型对输入变化越来越不敏感，梯度传播能力下降。
+
+
+---
+
+# 6. Jacobian 有限差分验证
+
+
+为了验证 Jacobian 实现正确性，使用有限差分：
+
+\[
+\frac{
+softmax(s+\epsilon e_i)
+-
+softmax(s)
+}
+{\epsilon}
+\]
+
+
+近似计算 Jacobian。
+
+
+实验参数：
+
+\[
+\epsilon=10^{-5}
+\]
+
+
+验证结果：
+
+
+
+Max absolute error:
+3.31639960e-07
+
+Mean absolute error:
+5.88716186e-08
+
+Frobenius error:
+8.31911966e-07
+
+
+
+误差达到：
+
+\[
+10^{-7}
+\]
+
+量级。
+
+说明：
+
+解析 Jacobian：
+
+\[
+diag(p)-pp^T
+\]
+
+与数值计算结果高度一致。
+
+
+---
+
+# 7. 实验结果
+
+
+## 7.1 Attention Score Standard Deviation
+
+
+实验结果：
+
+
+| \(d_k\) | Unscaled Std | Scaled Std |
+|-|-|-|
+|16|4.038|1.010|
+|32|5.718|1.011|
+|64|7.991|0.999|
+|128|11.339|1.002|
+|256|15.976|0.998|
+|512|22.612|0.999|
+
+
+结果显示：
+
+
+Unscaled:
+
+\[
+Std(QK^T)
+\]
+
+随着：
+
+\[
+d_k
+\]
+
+增加而增长。
+
+
+例如：
+
+\[
+d_k=512
+\]
+
+时：
+
+\[
+Std=22.612
+\]
+
+
+符合理论：
+
+\[
+Std(QK^T)\approx\sqrt{d_k}
+\]
+
+
+Scaled Attention:
+
+所有情况下：
+
+\[
+Std\approx1
+\]
+
+
+验证了：
+
+\[
+\frac{1}{\sqrt{d_k}}
+\]
+
+能够稳定 attention score。
+
+
+---
+
+## 7.2 Normalized Attention Entropy
+
+
+实验结果：
+
+
+| \(d_k\) | Unscaled Entropy | Scaled Entropy |
+|-|-|-|
+|16|0.325|0.884|
+|32|0.203|0.884|
+|64|0.140|0.887|
+|128|0.096|0.886|
+|256|0.064|0.885|
+|512|0.045|0.887|
+
+
+结果显示：
+
+
+Unscaled Attention:
+
+随着：
+
+\[
+d_k
+\]
+
+增大：
+
+\[
+H_{norm}
+\]
+
+快速下降。
+
+
+说明：
+
+attention 分布越来越尖锐。
+
+
+当：
+
+\[
+d_k=512
+\]
+
+
+时：
+
+\[
+H_{norm}=0.045
+\]
+
+
+接近完全集中。
+
+
+而 Scaled Attention：
+
+始终保持：
+
+\[
+H_{norm}\approx0.885
+\]
+
+
+说明 attention 分布更加稳定。
+
+
+---
+
+## 7.3 Softmax Jacobian Sensitivity
+
+
+实验结果：
+
+
+| \(d_k\) | Unscaled \(||J||_F\) | Scaled \(||J||_F\) |
+|-|-|-|
+|16|0.280|0.184|
+|32|0.248|0.185|
+|64|0.236|0.182|
+|128|0.175|0.182|
+|256|0.137|0.186|
+|512|0.092|0.184|
+
+
+结果显示：
+
+Unscaled Attention：
+
+随着：
+
+\[
+d_k
+\]
+
+增加：
+
+\[
+||J(p)||_F
+\]
+
+持续下降。
+
+
+说明：
+
+softmax 逐渐进入饱和状态。
+
+
+Scaled Attention：
+
+Jacobian sensitivity 始终保持稳定：
+
+\[
+\approx0.18
+\]
+
+
+说明：
+
+scaled attention 保留了更稳定的梯度响应。
+
+
+---
+
+# 8. 三联图结果
+
+
+实验生成：
+
+
+attention_scaling_three_panel.png
+
+
+
+包含三个部分：
+
+
+## (1) Attention Score Standard Deviation
+
+
+展示：
+
+\[
+Std(QK^T)
+\]
+
+
+验证：
+
+\[
+Std(QK^T)
+\propto
+\sqrt{d_k}
+\]
+
+
+以及 scaling 后：
+
+\[
+Std\approx1
+\]
+
+
+---
+
+## (2) Normalized Attention Entropy
+
+
+展示：
+
+softmax attention 分布变化。
+
+
+Unscaled：
+
+entropy 随 \(d_k\) 增大快速下降。
+
+
+Scaled：
+
+entropy 保持稳定。
+
+
+---
+
+## (3) Softmax Jacobian Sensitivity
+
+
+展示：
+
+\[
+||J(p)||_F
+\]
+
+
+Unscaled：
+
+随着 \(d_k\) 增大下降。
+
+
+Scaled：
+
+保持稳定。
+
+
+---
+
+# 9. 实验结论
+
+
+本实验验证了 Scaled Dot-Product Attention 中：
+
+\[
+\frac{1}{\sqrt{d_k}}
+\]
+
+缩放因子的必要性。
+
+
+当不进行 scaling 时：
+
+\[
+d_k\uparrow
+\]
+
+
+导致：
+
+\[
+Var(QK^T)\uparrow
+\]
+
+
+进一步导致：
+
+\[
+softmax(S)
+\]
+
+进入饱和区域。
+
+
+表现为：
+
+1. Attention score 方差不断增大
+
+2. Attention entropy 降低
+
+3. Jacobian sensitivity 降低
+
+
+最终导致：
+
+- attention 分布过于集中
+- 梯度传播能力下降
+
+
+而加入：
+
+\[
+\frac{1}{\sqrt{d_k}}
+\]
+
+
+后：
+
+- score scale 保持稳定
+- softmax 分布更加平滑
+- gradient sensitivity 更稳定
+
+
+因此：
+
+\[
+\boxed{
+Scaled Dot-Product Attention
+=
+Transformer稳定训练的重要机制
+}
+\]
+
+
+---
+
+# 10. 实验文件
+
+
+代码：
+
+
+experiments/week4/
+└── attention_scaling_experiment.py
+
+
+
+输出：
+
+
+outputs/figures/attention_scaling/
+
+├── attention_scaling_three_panel.png
+
+└── attention_scaling_results.json
